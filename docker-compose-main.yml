@@ -1,0 +1,222 @@
+version: "3"
+services:
+  redis:
+    container_name: redis
+    image: redis
+    build:
+      context: ./redis
+    volumes:
+      - ./persistent-data/redis:/data
+    command: redis-server --appendonly no
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: "exit 0"
+      interval: 1s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  odb1:
+    container_name: odb1
+    image: orientdb:2.2.27
+    command: dserver.sh
+    volumes:
+      # - ./persistent-data/odb1/config:/orientdb/config
+      - ./persistent-data/odb1/databases:/orientdb/databases
+      - ./persistent-data/odb1/backup:/orientdb/backup
+    environment:
+      ORIENTDB_ROOT_PASSWORD: root
+      ORIENTDB_NODE_NAME: odb1
+    ports:
+      - 2480:2480
+      - 2424:2424
+
+  #  odb2:
+  #    image: orientdb:2.2.27
+  #    command: dserver.sh
+  #    volumes:
+  #      - ./persistent-data/odb2/config:/orientdb/config
+  #      - ./persistent-data/odb2/databases:/orientdb/databases
+  #    environment:
+  #      ORIENTDB_ROOT_PASSWORD: root
+  #      ORIENTDB_NODE_NAME: odb2
+  #    depends_on:
+  #      - odb1
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    container_name: mssql
+    volumes:
+      - mssqlvolume:/var/opt/mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Maf#58c4"
+    ports:
+      - 1433:1433
+
+  matrix_qatar:
+    container_name: matrix_qatar
+    build:
+      context: ../matrix
+    # command: sh -c "sleep 5 && /usr/src/app/node_modules/.bin/nodemon server"
+    environment:
+      ACTIVEVENDOR: orientdb
+      HOSTUSERNAME: root
+      HOSTPASSWORD: root
+      DBHOST: odb1
+      DBPORT: 2424
+    ports:
+      - "7000:7000"
+    depends_on:
+      #- redis
+      - odb1
+      #- odb2
+    volumes:
+      - matrix_qatar_logs:/usr/src/app/logs
+      - ../matrix/node_modules:/usr/src/app/node_modules
+      - ../matrix:/usr/src/app
+    restart: always
+    links:
+      # - redis
+      - odb1
+      #- otpm
+
+  otpm:
+    container_name: otpm
+    build:
+      context: ../otpm
+    command: sh -c "sleep 5 && npm run migrate:dev && /usr/src/app/node_modules/.bin/nodemon server"
+    environment:
+      NODE_ENV: dev
+      GITHUB_TOKEN: xxx
+      OTPM_DB_HOST: mssql
+      OTPM_DB_USER: sa
+      OTPM_DB_PASSWORD: Maf#58c4
+      OTPM_DB_PORT: 1433
+      OTPM_DB_NAME: OTPM_DEV
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mssql
+    volumes:
+      - otpm_logs:/usr/src/app/logs
+      - node_modules_otpm:/usr/src/app/node_modules
+      - ../otpm:/usr/src/app
+    links:
+      - mssql
+    restart: always
+
+  phoenix:
+    container_name: phoenix
+    build:
+      context: ../phoenix
+    environment:
+      NODE_ENV: dev
+      GITHUB_TOKEN: xxx
+      # DB_HOST: odb1
+      # DB_USER: root
+      # DB_PASSWORD: root
+      # DB_PORT: 2424
+      # DB_NAME: carrefour2
+    command: sh -c "sleep 5 && /usr/src/app/node_modules/.bin/nodemon server"
+    ports:
+      - "9000:9000"
+    # depends_on:
+    #   - odb1
+    volumes:
+      - phoenix_logs:/usr/src/app/logs
+      - ../phoenix/node_modules:/usr/src/app/node_modules
+      - ../phoenix:/usr/src/app
+    # links:
+    #   - otpm
+    restart: always
+
+  deimos:
+    container_name: deimos
+    build:
+      context: ../deimos
+    environment:
+      NODE_ENV: development
+      GITHUB_TOKEN: xxx
+
+    # command: sh -c "sleep 5 && /usr/src/app/node_modules/.bin/nodemon server"
+    command: sh -c "sleep 5 && /usr/src/app/node_modules/.bin/nodemon server"
+    ports:
+      - "9200:9200"
+    volumes:
+      - deimos_logs:/usr/src/app/logs
+      - node_modules_deimos:/usr/src/app/node_modules
+      - ../deimos:/usr/src/app
+
+    restart: always
+  cosmosdb:
+    image: microsoft/azure-cosmosdb-emulator
+    container_name: cosmosdb-emulator
+    ports:
+      - "8081:8081"
+  zion_uae:
+    container_name: zion_uae
+    build:
+      context: ../zion
+    command: sh -c "sleep 5 && ./zion"
+    environment:
+      PORT: 8080
+      ZION_ENV: dev
+      
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    volumes:
+      - ../zion:/app
+      - zion_logs:/app/logs
+    links:
+      - redis
+    restart: always
+  bravo:
+    container_name: bravo
+    build:
+      context: ../bravo
+    command: sh -c "sleep 5 && /usr/src/app/node_modules/.bin/nodemon server"
+    environment:
+      NODE_ENV: development
+      PORT: 9300
+    ports:
+      - "9300:9300"
+    volumes:
+      - bravo_logs:/usr/src/app/logs
+      - node_modules_bravo:/usr/src/app/node_modules
+      - ../bravo:/usr/src/app
+    restart: always
+
+  mongodb:
+    image: mongo:5.0
+    container_name: mongo_qatar
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    ports:
+      - 27017:27017
+    volumes:
+      - data:/data/db
+
+volumes:
+  elasticsearch: {}
+  ciam_logs: {}
+  zion_logs: {}
+  node_modules_matrix: {}
+  node_modules_ciam: {}
+  mssqlvolume: {}
+  otpm_logs: {}
+  node_modules_otpm: {}
+  phoenix_logs: {}
+  node_modules_phoenix: {}
+  node_modules: {}
+  matrix_logs: {}
+  matrix_qatar_logs: {}
+  node_modules_deimos: {}
+  deimos_logs: {}
+  bravo_logs: {}
+  node_modules_bravo: {}
+  data: {}

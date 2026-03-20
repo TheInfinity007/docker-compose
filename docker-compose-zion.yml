@@ -1,0 +1,40 @@
+version: "3"
+services:
+  redis:
+    container_name: redis
+    image: redis
+    build:
+      context: ./redis
+    volumes:
+      - ./persistent-data/redis:/data
+    command: redis-server --appendonly no
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: "exit 0"
+      interval: 1s
+      timeout: 10s
+      retries: 5
+    restart: always
+  zion_uae:
+    container_name: zion_uae
+    build:
+      context: ../zion
+    # command: sh -c "sleep 5 && ./zion"
+    command: sh -c "sleep 5 && go run main.go"
+    environment:
+      PORT: 8080
+      DOCKER_ENABLE_CI: "true"
+    ports:
+      - "8080:8080"
+    # depends_on:
+    #   - redis
+    volumes:
+      - ../zion:/app
+      - zion_logs:/app/logs
+    # links:
+    #   - redis
+    restart: always
+
+volumes:
+  zion_logs: {}
