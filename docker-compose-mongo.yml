@@ -1,0 +1,16 @@
+version: "3"
+services:
+  mongodb:
+    # platform: linux/x86_64
+    container_name: mongodb
+    image: mongo
+    # command: dserver.sh
+    # environment:
+    ports:
+      - 27017:27017
+    volumes:
+      - ./persistent-data/mongodb:/data/db
+    
+
+volumes:
+  mongo_data: {}

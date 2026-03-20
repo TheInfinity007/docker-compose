@@ -1,0 +1,46 @@
+version: "3"
+services:
+  #  It is for the intel chips
+  # mssql:
+  #   image: mcr.microsoft.com/mssql/server:2017-latest
+  #   container_name: mssql
+  #   # volumes:
+  #     # - mssqlvolume:/var/opt/mssql
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     SA_PASSWORD: "Maf#58c4"
+  #   ports:
+  #     - 1433:1433
+
+  # For M series chips
+
+  mssqledge:
+    image: mcr.microsoft.com/azure-sql-edge
+    container_name: mssqledge
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Maf#58c4"
+    ports:
+      - 1433:1433
+
+  # otpm:
+  #   container_name: otpm
+  #   build:
+  #     context: ../otpm
+  #   command: sh -c "sleep 5 && npm run migrate:dev && /usr/src/app/node_modules/.bin/nodemon server"
+  #   env_file:
+  #     - ../otpm/.env.staging
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - otpm_logs:/usr/src/app/logs
+  #     - node_modules_otpm:/usr/src/app/node_modules
+  #     - ../otpm:/usr/src/app
+  #   restart: always
+
+volumes:
+  mssqlvolume: {}
+  otpm_logs: {}
+  node_modules_otpm: {}
+  node_modules: {}
+  data: {}

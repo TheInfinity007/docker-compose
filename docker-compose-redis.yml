@@ -1,0 +1,21 @@
+version: "3"
+services:
+  redis:
+    container_name: redis
+    image: redis
+    build:
+      context: ./redis
+    volumes:
+      - ./persistent-data/redis:/data
+    command: redis-server --appendonly no
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: "exit 0"
+      interval: 1s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+volumes:
+  zion_logs: {}

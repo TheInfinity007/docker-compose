@@ -1,0 +1,17 @@
+# Docker for installing and running oracle sql db
+version: "3"
+services:
+  oracle_sql_db:
+    container_name: oracle-sql-db
+    image: gvenzl/oracle-xe:21-slim
+    environment:
+      ORACLE_PASSWORD: admin
+    ports:
+      - 1521:1521
+    volumes:
+      - oracle-db:/opt/oracle/oradata
+      - oracle-config:/opt/oracle/config
+
+volumes:
+  oracle-db: {}
+  oracle-config: {}

@@ -1,0 +1,20 @@
+version: "3"
+services:
+  odb1:
+    platform: linux/x86_64
+    container_name: odb1
+    image: orientdb:2.2.27
+    command: dserver.sh
+    volumes:
+      # - ./persistent-data/odb1/config:/orientdb/config
+      - ./persistent-data/odb1/databases:/orientdb/databases
+      - ./persistent-data/odb1/backup:/orientdb/backup
+    environment:
+      ORIENTDB_ROOT_PASSWORD: root
+      ORIENTDB_NODE_NAME: odb1
+    ports:
+      - 2480:2480
+      - 2424:2424
+
+volumes:
+  mssqlvolume: {}
