@@ -3,10 +3,8 @@ services:
   redis:
     container_name: redis
     image: redis
-    build:
-      context: ./redis
     volumes:
-      - ./persistent-data/redis:/data
+      - redisdata:/data
     command: redis-server --appendonly no
     ports:
       - "6379:6379"
@@ -16,6 +14,11 @@ services:
       timeout: 10s
       retries: 5
     restart: always
+    networks:
+      - redis_network
 
 volumes:
-  zion_logs: {}
+  redisdata: {}
+
+networks:
+  redis_network:
